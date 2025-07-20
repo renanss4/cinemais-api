@@ -8,13 +8,14 @@ API RESTful para gerenciamento de catálogo de mídias e lista de favoritos dos 
 
 ### Framework: Fastify
 
-Escolhi o **Fastify** pelos seguintes motivos:
+Escolhi o **Fastify** neste projeto por ser uma solução leve, de alta performance e especialmente adequada para prototipagem rápida
+e construção de APIs RESTful simples.
+Abaixo, destaco alguns pontos que embasaram essa decisão:
 
-- **Performance superior**: Até 2x mais rápido que o Express em benchmarks
 - **TypeScript nativo**: Excelente suporte ao TypeScript sem configurações adicionais
 - **Sistema de plugins**: Arquitetura modular que facilita a organização do código
 - **Validação integrada**: Suporte nativo para validação de schemas JSON
-- **Menor overhead**: Menos middleware desnecessário comparado ao Express
+- **Menor overhead**: Menos middleware desnecessário.
 
 ### Banco de Dados: MongoDB
 
