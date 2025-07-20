@@ -64,46 +64,20 @@ describe("Validators", () => {
   describe("validateCreateUserRequest", () => {
     it("should return null for valid user request", () => {
       const validUser: CreateUserRequest = {
-        username: "testuser",
         email: "test@example.com",
-        password: "password123",
       };
 
       const result = validateCreateUserRequest(validUser);
       expect(result).toBeNull();
     });
 
-    it("should return error for short username", () => {
-      const invalidUser: CreateUserRequest = {
-        username: "ab",
-        email: "test@example.com",
-        password: "password123",
-      };
-
-      const result = validateCreateUserRequest(invalidUser);
-      expect(result).toBe("Username must be at least 3 characters long.");
-    });
-
     it("should return error for invalid email", () => {
       const invalidUser: CreateUserRequest = {
-        username: "testuser",
         email: "invalid-email",
-        password: "password123",
       };
 
       const result = validateCreateUserRequest(invalidUser);
       expect(result).toBe("Email must be a valid email address.");
-    });
-
-    it("should return error for short password", () => {
-      const invalidUser: CreateUserRequest = {
-        username: "testuser",
-        email: "test@example.com",
-        password: "123",
-      };
-
-      const result = validateCreateUserRequest(invalidUser);
-      expect(result).toBe("Password must be at least 6 characters long.");
     });
   });
 
