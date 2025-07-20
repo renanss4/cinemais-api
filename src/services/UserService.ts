@@ -1,8 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ObjectId } from "mongodb";
 import { User, CreateUserRequest, UserResponse } from "../models/UserModel";
-import { ConflictError, NotFoundError, ServerError } from "../utils/errors";
-import * as crypto from "crypto";
+import { AppError } from "../utils/errors";
 
 export class UserService {
   private fastify: FastifyInstance;
@@ -11,14 +10,9 @@ export class UserService {
     this.fastify = fastify;
   }
 
-  private hashPassword(password: string): string {
-    return crypto.createHash("sha256").update(password).digest("hex");
-  }
-
   private toUserResponse(user: User | any): UserResponse {
     return {
       id: user._id ? user._id.toString() : user.id,
-      username: user.username,
       email: user.email,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt || user.createdAt,
@@ -28,93 +22,73 @@ export class UserService {
   private documentToUser(doc: any): User {
     return {
       id: doc._id.toString(),
-      username: doc.username,
       email: doc.email,
-      passwordHash: doc.passwordHash,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt || doc.createdAt,
     };
   }
 
   async createUser(userData: CreateUserRequest): Promise<UserResponse> {
-    try {
-      const userCollection = this.fastify.mongo.db!.collection("users");
+    const userCollection = this.fastify.mongo.db!.collection("users");
 
-      const existingUser = await userCollection.findOne({
-        email: userData.email,
-      });
-      if (existingUser) {
-        throw new ConflictError("Email already exists");
-      }
-
-      const existingUsername = await userCollection.findOne({
-        username: userData.username,
-      });
-      if (existingUsername) {
-        throw new ConflictError("Username already exists");
-      }
-
-      const newUser = {
-        username: userData.username,
-        email: userData.email,
-        passwordHash: this.hashPassword(userData.password),
-        createdAt: new Date(),
-      };
-
-      const result = await userCollection.insertOne(newUser);
-      const insertedUser = await userCollection.findOne({
-        _id: result.insertedId,
-      });
-
-      if (!insertedUser) {
-        throw new ServerError("Failed to create user");
-      }
-
-      const user = this.documentToUser(insertedUser);
-      return this.toUserResponse(user);
-    } catch (error) {
-      if (error instanceof ConflictError) {
-        throw error;
-      }
-      throw new ServerError("Failed to create user");
+    const existingUser = await userCollection.findOne({
+      email: userData.email,
+    });
+    if (existingUser) {
+      throw new AppError("Email already exists", 409);
     }
+
+    const newUser = {
+      email: userData.email,
+      createdAt: new Date(),
+    };
+
+    const result = await userCollection.insertOne(newUser);
+    const insertedUser = await userCollection.findOne({
+      _id: result.insertedId,
+    });
+
+    if (!insertedUser) {
+      throw new AppError("Failed to create user", 500);
+    }
+
+    const user = this.documentToUser(insertedUser);
+    return this.toUserResponse(user);
   }
 
   async getAllUsers(): Promise<UserResponse[]> {
-    try {
-      const userCollection = this.fastify.mongo.db!.collection("users");
-      const users = await userCollection.find({}).toArray();
-
-      return users.map((doc) => {
-        const user = this.documentToUser(doc);
-        return this.toUserResponse(user);
-      });
-    } catch (error) {
-      throw new ServerError("Failed to fetch users");
+    if (!this.fastify.mongo.db) {
+      throw new AppError("Database connection not established", 500);
     }
+
+    const userCollection = this.fastify.mongo.db!.collection("users");
+
+    if (!userCollection) {
+      throw new AppError("User collection not found", 500);
+    }
+
+    const users = await userCollection.find({}).toArray();
+
+    return users.map((doc) => {
+      const user = this.documentToUser(doc);
+      return this.toUserResponse(user);
+    });
   }
 
   async getUserById(id: string): Promise<UserResponse | null> {
-    try {
-      const userCollection = this.fastify.mongo.db!.collection("users");
+    const userCollection = this.fastify.mongo.db!.collection("users");
 
-      if (!ObjectId.isValid(id)) {
-        throw new NotFoundError("User");
-      }
-
-      const doc = await userCollection.findOne({ _id: new ObjectId(id) });
-
-      if (!doc) {
-        throw new NotFoundError("User");
-      }
-
-      const user = this.documentToUser(doc);
-      return this.toUserResponse(user);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw error;
-      }
-      throw new ServerError("Failed to fetch user");
+    if (!ObjectId.isValid(id)) {
+      throw new AppError("Invalid user ID", 400);
     }
+
+    const doc = await userCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!doc) {
+      throw new AppError("User not found", 404);
+    }
+
+    const user = this.documentToUser(doc);
+    return this.toUserResponse(user);
   }
 }

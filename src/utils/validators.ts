@@ -62,19 +62,7 @@ export function validateId(id: string): string | null {
 export function validateCreateUserRequest(
   data: CreateUserRequest
 ): string | null {
-  const { username, email, password } = data;
-
-  if (
-    !username ||
-    typeof username !== "string" ||
-    username.trim().length === 0
-  ) {
-    return "Username is required and must be a valid string.";
-  }
-
-  if (username.trim().length < 3) {
-    return "Username must be at least 3 characters long.";
-  }
+  const { email } = data;
 
   if (!email || typeof email !== "string" || email.trim().length === 0) {
     return "Email is required and must be a valid string.";
@@ -83,14 +71,6 @@ export function validateCreateUserRequest(
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return "Email must be a valid email address.";
-  }
-
-  if (!password || typeof password !== "string" || password.length === 0) {
-    return "Password is required and must be a valid string.";
-  }
-
-  if (password.length < 6) {
-    return "Password must be at least 6 characters long.";
   }
 
   return null;
