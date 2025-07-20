@@ -292,6 +292,7 @@ NODE_ENV=development
 
 Para evoluir a aplicação, considerarei implementar:
 
+- [ ] ESLint / Prettier
 - [ ] Sistema de autenticação JWT
 - [ ] Paginação nos endpoints de listagem
 - [ ] Cache com Redis
