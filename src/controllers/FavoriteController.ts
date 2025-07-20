@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { FavoriteService } from "../services/FavoriteService";
 import { AddToFavoritesRequest } from "../models/FavoriteModel";
 import { validateId } from "../utils/validators";
-import { ValidationError } from "../utils/errors";
+import { AppError } from "../utils/errors";
 
 export class FavoriteController {
   private favoriteService: FavoriteService;
@@ -23,12 +23,12 @@ export class FavoriteController {
 
     const userIdError = validateId(userId);
     if (userIdError) {
-      throw new ValidationError(userIdError);
+      throw new AppError(userIdError, 400);
     }
 
     const mediaIdError = validateId(mediaId);
     if (mediaIdError) {
-      throw new ValidationError(mediaIdError);
+      throw new AppError(mediaIdError, 400);
     }
 
     await this.favoriteService.addToFavorites(userId, mediaId);
@@ -43,7 +43,7 @@ export class FavoriteController {
 
     const userIdError = validateId(userId);
     if (userIdError) {
-      throw new ValidationError(userIdError);
+      throw new AppError(userIdError, 400);
     }
 
     const favorites = await this.favoriteService.getUserFavorites(userId);
@@ -60,12 +60,12 @@ export class FavoriteController {
 
     const userIdError = validateId(userId);
     if (userIdError) {
-      throw new ValidationError(userIdError);
+      throw new AppError(userIdError, 400);
     }
 
     const mediaIdError = validateId(mediaId);
     if (mediaIdError) {
-      throw new ValidationError(mediaIdError);
+      throw new AppError(mediaIdError, 400);
     }
 
     await this.favoriteService.removeFromFavorites(userId, mediaId);

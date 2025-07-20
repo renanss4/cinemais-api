@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { UserService } from "../services/UserService";
 import { CreateUserRequest } from "../models/UserModel";
 import { validateCreateUserRequest, validateId } from "../utils/validators";
-import { ValidationError } from "../utils/errors";
+import { AppError } from "../utils/errors";
 
 export class UserController {
   private userService: UserService;
@@ -17,7 +17,7 @@ export class UserController {
   ) {
     const validationError = validateCreateUserRequest(request.body);
     if (validationError) {
-      throw new ValidationError(validationError);
+      throw new AppError(validationError, 400);
     }
 
     const user = await this.userService.createUser(request.body);
@@ -37,7 +37,7 @@ export class UserController {
 
     const validationError = validateId(id);
     if (validationError) {
-      throw new ValidationError(validationError);
+      throw new AppError(validationError, 400);
     }
 
     const user = await this.userService.getUserById(id);

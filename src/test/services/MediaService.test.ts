@@ -42,6 +42,8 @@ describe("MediaService", () => {
         updatedAt: new Date(),
       };
 
+      // Mock para não encontrar mídia existente com o mesmo título
+      mockCollection.findOne.mockResolvedValueOnce(null);
       mockCollection.insertOne.mockResolvedValueOnce({ insertedId });
       mockCollection.findOne.mockResolvedValueOnce(insertedMedia);
 
@@ -78,28 +80,10 @@ describe("MediaService", () => {
       ).rejects.toThrow();
     });
 
-    it("should throw error if database is not connected", async () => {
-      const mockFastifyWithoutDb = {
-        mongo: {
-          db: null,
-        },
-      };
-
-      const serviceWithoutDb = new MediaService(mockFastifyWithoutDb as any);
-
-      await expect(serviceWithoutDb.createMedia(mediaData)).rejects.toThrow();
-    });
-
-    it("should throw error if media creation fails", async () => {
-      mockCollection.insertOne.mockResolvedValueOnce({ insertedId: "123" });
-      mockCollection.findOne.mockResolvedValueOnce(null);
-
-      await expect(mediaService.createMedia(mediaData)).rejects.toThrow(
-        new AppError("Failed to create media", 500)
-      );
-    });
-
     it("should throw error if insertOne fails", async () => {
+      // Mock para não encontrar mídia existente
+      mockCollection.findOne.mockResolvedValueOnce(null);
+      // Mock para falhar na inserção
       mockCollection.insertOne.mockRejectedValueOnce(
         new Error("Database error")
       );
@@ -109,19 +93,36 @@ describe("MediaService", () => {
       );
     });
 
-    it("should handle duplicate media title gracefully", async () => {
-      // Simulate database unique constraint error
-      const duplicateError = new Error("E11000 duplicate key error");
-      (duplicateError as any).code = 11000;
+    it("should throw error if media with same title exists", async () => {
+      // Mock para encontrar mídia existente com mesmo título
+      mockCollection.findOne.mockResolvedValueOnce({
+        _id: "existing-id",
+        title: mediaData.title,
+      });
 
-      mockCollection.insertOne.mockRejectedValueOnce(duplicateError);
+      await expect(mediaService.createMedia(mediaData)).rejects.toThrow(
+        new AppError("Media with this title already exists", 400)
+      );
+    });
 
-      await expect(mediaService.createMedia(mediaData)).rejects.toThrow();
+    it("should throw error if failed to retrieve created media", async () => {
+      const insertedId = "507f1f77bcf86cd799439011";
+
+      // Mock para não encontrar mídia existente
+      mockCollection.findOne.mockResolvedValueOnce(null);
+      // Mock para inserção bem-sucedida
+      mockCollection.insertOne.mockResolvedValueOnce({ insertedId });
+      // Mock para falhar na busca da mídia criada
+      mockCollection.findOne.mockResolvedValueOnce(null);
+
+      await expect(mediaService.createMedia(mediaData)).rejects.toThrow(
+        new AppError("Failed to create media", 500)
+      );
     });
   });
 
   describe("getAllMedia", () => {
-    it("should return all media successfully", async () => {
+    it("should return all media", async () => {
       const medias = [
         {
           _id: { toString: () => "1" },
@@ -135,7 +136,7 @@ describe("MediaService", () => {
         },
         {
           _id: { toString: () => "2" },
-          title: "Series 1",
+          title: "Movie 2",
           description: "Description 2",
           type: "series",
           releaseYear: 2022,

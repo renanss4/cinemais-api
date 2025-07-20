@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { MediaService } from "../services/MediaService";
 import { CreateMediaRequest } from "../models/MediaModel";
 import { validateCreateMediaRequest, validateId } from "../utils/validators";
-import { ValidationError } from "../utils/errors";
+import { AppError } from "../utils/errors";
 
 export class MediaController {
   private mediaService: MediaService;
@@ -17,7 +17,7 @@ export class MediaController {
   ) {
     const validationError = validateCreateMediaRequest(request.body);
     if (validationError) {
-      throw new ValidationError(validationError);
+      throw new AppError(validationError, 400);
     }
 
     const media = await this.mediaService.createMedia(request.body);
@@ -37,7 +37,7 @@ export class MediaController {
 
     const validationError = validateId(id);
     if (validationError) {
-      throw new ValidationError(validationError);
+      throw new AppError(validationError, 400);
     }
 
     const media = await this.mediaService.getMediaById(id);
